@@ -58,6 +58,12 @@ module.exports = function(config) {
     return new Date(dateObj).toISOString().split("T")[0];
   });
 
+  // Add this after the existing filters
+  config.addFilter("stripUrl", url => {
+    if (typeof url !== 'string') return url;
+    return url.replace(process.env.GHOST_API_URL, "");
+  });
+
   // Don't ignore the same files ignored in the git repo
   config.setUseGitIgnore(false);
 
@@ -76,6 +82,11 @@ module.exports = function(config) {
     collection.map(doc => {
       doc.url = stripDomain(doc.url);
       doc.primary_author.url = stripDomain(doc.primary_author.url);
+      if (doc.authors) {
+        doc.authors.forEach(author => {
+          author.url = stripDomain(author.url);
+        });
+      }
 
       // Convert publish date into a Date object
       doc.published_at = new Date(doc.published_at);
@@ -99,12 +110,7 @@ module.exports = function(config) {
     collection.forEach(post => {
       post.url = stripDomain(post.url);
       post.primary_author.url = stripDomain(post.primary_author.url);
-      post.tags.forEach(tag => {
-        tag.url = stripDomain(tag.url);
-      });
-      if (post.primary_tag) {
-        post.primary_tag.url = stripDomain(post.primary_tag.url);
-      }
+      post.tags.map(tag => (tag.url = stripDomain(tag.url)));
 
       // Convert publish date into a Date object
       post.published_at = new Date(post.published_at);
@@ -214,3 +220,5 @@ module.exports = function(config) {
     passthroughFileCopy: true
   };
 };
+
+module.exports = { stripDomain };
